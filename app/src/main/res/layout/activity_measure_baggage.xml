@@ -1,0 +1,65 @@
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+             xmlns:tools="http://schemas.android.com/tools"
+             android:layout_width="match_parent"
+             android:layout_height="match_parent">
+
+    <fragment android:name="com.zjwop.ar.baggage.ArConfigFragment"
+              android:id="@+id/ux_fragment"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent" />
+
+    <TextView
+        android:id="@+id/user_hint_tv"
+        android:layout_width="250dp"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="50dp"
+        android:background="@android:color/background_light"
+        android:gravity="center"
+        android:textColor="#000000"
+        android:text="请扫描地面校准\n出现白色网格时点击确认"/>
+
+    <TextView
+        android:id="@+id/result_tv"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="5dp"
+        android:layout_below="@id/user_hint_tv"
+        android:background="@android:color/background_light"
+        android:gravity="center"
+        android:textColor="#000000"
+        android:visibility="gone"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:orientation="horizontal"
+        android:gravity="center_horizontal">
+        <TextView
+            android:id="@+id/mode_switch"
+            android:layout_height="50dp"
+            android:layout_width="100dp"
+            android:layout_margin="10dp"
+            android:gravity="center"
+            android:background="@android:color/black"
+            android:text="手动"
+            android:textColor="@android:color/white"/>
+
+        <TextView
+            android:id="@+id/begin_scan"
+            android:layout_height="50dp"
+            android:layout_width="100dp"
+            android:layout_margin="10dp"
+            android:gravity="center"
+            android:text="长按扫描"
+            android:visibility="gone"
+            android:background="@android:color/black"
+            tools:visibility="visible"
+            android:textColor="@android:color/white"/>
+    </LinearLayout>
+
+
+</RelativeLayout>

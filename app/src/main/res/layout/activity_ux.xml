@@ -1,0 +1,229 @@
+<!--
+   Copyright 2018 Google LLC.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.zjwop.ar.baggage.HelloSceneformActivity">
+
+  <fragment android:name="com.google.ar.sceneform.ux.ArFragment"
+      android:id="@+id/ux_fragment"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent" />
+
+
+  <LinearLayout
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_gravity="bottom"
+      android:orientation="horizontal">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center_horizontal">
+      <TextView
+          android:id="@+id/tx"
+          android:layout_height="wrap_content"
+          android:layout_width="wrap_content"
+          android:gravity="center"
+          android:text="tx"
+          />
+      <Button
+          android:id="@+id/tx_plus_btn"
+          android:layout_height="wrap_content"
+          android:layout_width="wrap_content"
+          android:gravity="center"
+          android:text="tx +"/>
+
+      <Button
+          android:id="@+id/tx_minus_btn"
+          android:layout_height="wrap_content"
+          android:layout_width="wrap_content"
+          android:gravity="center"
+          android:text="tx -"/>
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center_horizontal">
+      <TextView
+          android:id="@+id/ty"
+          android:layout_height="wrap_content"
+          android:layout_width="wrap_content"
+          android:gravity="center"
+          android:text="ty"
+          />
+      <Button
+          android:id="@+id/ty_plus_btn"
+          android:layout_height="wrap_content"
+          android:layout_width="wrap_content"
+          android:gravity="center"
+          android:text="ty +"/>
+
+      <Button
+          android:id="@+id/ty_minus_btn"
+          android:layout_height="wrap_content"
+          android:layout_width="wrap_content"
+          android:gravity="center"
+          android:text="ty -"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center_horizontal">
+      <TextView
+          android:id="@+id/tz"
+          android:layout_height="wrap_content"
+          android:layout_width="wrap_content"
+          android:gravity="center"
+          android:text="tz"
+          />
+      <Button
+          android:id="@+id/tz_plus_btn"
+          android:layout_height="wrap_content"
+          android:layout_width="wrap_content"
+          android:gravity="center"
+          android:text="tz +"/>
+
+      <Button
+          android:id="@+id/tz_minus_btn"
+          android:layout_height="wrap_content"
+          android:layout_width="wrap_content"
+          android:gravity="center"
+          android:text="tz -"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center_horizontal">
+      <TextView
+          android:id="@+id/qx"
+          android:layout_height="wrap_content"
+          android:layout_width="wrap_content"
+          android:gravity="center"
+          android:text="qx"
+          />
+      <Button
+          android:id="@+id/qx_plus_btn"
+          android:layout_height="wrap_content"
+          android:layout_width="wrap_content"
+          android:gravity="center"
+          android:text="qx +"/>
+
+      <Button
+          android:id="@+id/qx_minus_btn"
+          android:layout_height="wrap_content"
+          android:layout_width="wrap_content"
+          android:gravity="center"
+          android:text="qx -"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center_horizontal">
+      <TextView
+          android:id="@+id/qy"
+          android:layout_height="wrap_content"
+          android:layout_width="wrap_content"
+          android:gravity="center"
+          android:text="qy"
+          />
+      <Button
+          android:id="@+id/qy_plus_btn"
+          android:layout_height="wrap_content"
+          android:layout_width="wrap_content"
+          android:gravity="center"
+          android:text="qy +"/>
+
+      <Button
+          android:id="@+id/qy_minus_btn"
+          android:layout_height="wrap_content"
+          android:layout_width="wrap_content"
+          android:gravity="center"
+          android:text="qy -"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center_horizontal">
+      <TextView
+          android:id="@+id/qz"
+          android:layout_height="wrap_content"
+          android:layout_width="wrap_content"
+          android:gravity="center"
+          android:text="qz"
+          />
+      <Button
+          android:id="@+id/qz_plus_btn"
+          android:layout_height="wrap_content"
+          android:layout_width="wrap_content"
+          android:gravity="center"
+          android:text="qz +"/>
+
+      <Button
+          android:id="@+id/qz_minus_btn"
+          android:layout_height="wrap_content"
+          android:layout_width="wrap_content"
+          android:gravity="center"
+          android:text="qz -"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center_horizontal">
+      <TextView
+          android:id="@+id/qw"
+          android:layout_height="wrap_content"
+          android:layout_width="wrap_content"
+          android:gravity="center"
+          android:text="qw"
+          />
+      <Button
+          android:id="@+id/qw_plus_btn"
+          android:layout_height="wrap_content"
+          android:layout_width="wrap_content"
+          android:gravity="center"
+          android:text="qw +"/>
+
+      <Button
+          android:id="@+id/qw_minus_btn"
+          android:layout_height="wrap_content"
+          android:layout_width="wrap_content"
+          android:gravity="center"
+          android:text="qw -"/>
+    </LinearLayout>
+
+  </LinearLayout>
+</FrameLayout>
