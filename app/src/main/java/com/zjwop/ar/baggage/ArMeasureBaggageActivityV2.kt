@@ -48,10 +48,9 @@ import kotlin.math.min
  * 确认地面模式
  *
  * 手动确认地面
- * 自动上表面检测采用顺序遍历模式
+ * 自动上表面检测使用屏幕中心射线模式
  */
-
-class ArMeasureBaggageActivity : AppCompatActivity(), Scene.OnUpdateListener, BaseArFragment.OnTapArPlaneListener{
+class ArMeasureBaggageActivityV2 : AppCompatActivity(), Scene.OnUpdateListener, BaseArFragment.OnTapArPlaneListener{
 
     companion object {
         private const val TAG = "ArMeasureBaggageActivity"
@@ -152,29 +151,27 @@ class ArMeasureBaggageActivity : AppCompatActivity(), Scene.OnUpdateListener, Ba
         updatePlaneInfo()
 
         if (isAutoMode && isScanning) {
-            val trackables = frame.getUpdatedTrackables(Plane::class.java)
-            val iterator = trackables.iterator()
-            while (iterator.hasNext()) {
-                val plane = iterator.next()
-                if (plane.trackingState != TrackingState.TRACKING) {
-                    continue
-                }
-                if (groundPlane == plane) {
-                    continue
-                }
-                if (groundPlane == plane.subsumedBy) {
-                    continue
-                }
-                if (invalidPlaneSet.contains(plane)) {
-                    continue
-                }
-                if (isBaggageTopDetected) {
-                    renderMeasureResult()
-                } else if (isBaggageSideDetected) {
-                    if (!autoDetectBaggageTopPlane(plane)) {
-                        invalidPlaneSet.add(plane)
+            if (isBaggageTopDetected) {
+                renderMeasureResult()
+            } else if (isBaggageSideDetected) {
+                frame.hitTest(arSceneView.width * 0.5F, arSceneView.height * 0.5F).forEach {
+                    val trackable = it.trackable
+                    if (trackable is Plane && trackable.isPoseInPolygon(it.hitPose)) when {
+                        trackable.trackingState != TrackingState.TRACKING -> Unit
+                        groundPlane == trackable -> Unit
+                        groundPlane == trackable.subsumedBy -> Unit
+                        invalidPlaneSet.contains(trackable) -> Unit
+                        !autoDetectBaggageTopPlane(trackable) -> invalidPlaneSet.add(trackable)
                     }
-                } else {
+                }
+            } else {
+                val trackables = frame.getUpdatedTrackables(Plane::class.java)
+                val iterator = trackables.iterator()
+                while (iterator.hasNext()) {
+                    val plane = iterator.next()
+                    if (plane.trackingState != TrackingState.TRACKING) {
+                        continue
+                    }
                     if(autoDetectBaggageSidePlane(plane)) {
                         break
                     }

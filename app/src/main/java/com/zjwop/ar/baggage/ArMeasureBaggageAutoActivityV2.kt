@@ -23,7 +23,6 @@ import android.os.Build.VERSION_CODES
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
-import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
 import android.widget.TextView
@@ -35,26 +34,24 @@ import com.google.ar.sceneform.AnchorNode
 import com.google.ar.sceneform.ArSceneView
 import com.google.ar.sceneform.FrameTime
 import com.google.ar.sceneform.Scene
-import com.google.ar.sceneform.rendering.ModelRenderable
 import com.google.ar.sceneform.rendering.PlaneRenderer
 import com.google.ar.sceneform.rendering.Texture
 import com.google.ar.sceneform.ux.BaseArFragment
-import com.google.ar.sceneform.ux.TransformableNode
 import com.zjwop.ar.R
 import kotlin.math.max
 import kotlin.math.min
 
-/**
- * 确认地面模式
- *
- * 手动确认地面
- * 自动上表面检测采用顺序遍历模式
- */
 
-class ArMeasureBaggageActivity : AppCompatActivity(), Scene.OnUpdateListener, BaseArFragment.OnTapArPlaneListener{
+/**
+ * 全自动模式
+ *
+ * 自动地面检测使用最低平面模式
+ * 自动上表面检测使用屏幕中心射线模式
+ */
+class ArMeasureBaggageAutoActivityV2 : AppCompatActivity(), Scene.OnUpdateListener, BaseArFragment.OnTapArPlaneListener{
 
     companion object {
-        private const val TAG = "ArMeasureBaggageActivity"
+        private const val TAG = "ArMeasureBaggageAutoActivity"
     }
 
     private lateinit var arFragment: ArConfigFragment
@@ -76,7 +73,6 @@ class ArMeasureBaggageActivity : AppCompatActivity(), Scene.OnUpdateListener, Ba
     private var isGroundDetected = false
     private var isBaggageTopDetected = false
     private var isBaggageSideDetected = false
-    private var isAutoMode = false
     private var isScanning = false
     private var isBaggageRendered = false
 
@@ -101,33 +97,35 @@ class ArMeasureBaggageActivity : AppCompatActivity(), Scene.OnUpdateListener, Ba
         arSceneView = arFragment.arSceneView
         arSceneView.scene.addOnUpdateListener(this)
 
-        userHitView = findViewById(R.id.user_hint_tv)
+        userHitView = findViewById<TextView>(R.id.user_hint_tv).apply {
+            text = "长按扫描行李箱"
+        }
         resultView = findViewById(R.id.result_tv)
-        modeSwitch = findViewById(R.id.mode_switch)
-        modeSwitch.setOnClickListener {
-            isAutoMode = !isAutoMode
-            modeSwitch.text = if (isAutoMode) "自动" else "手动"
-            scanBtn.visibility = if (isAutoMode) View.VISIBLE else View.GONE
+        modeSwitch = findViewById<TextView>(R.id.mode_switch).apply {
+            visibility = View.GONE
         }
-        scanBtn = findViewById(R.id.begin_scan)
-        scanBtn.setOnTouchListener { v, event ->
-            when(event.action) {
-                MotionEvent.ACTION_DOWN -> {
-                    isScanning = true
-                    scanBtn.setBackgroundColor(android.graphics.Color.BLUE)
-                }
-                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                    isScanning = false
-                    scanBtn.setBackgroundColor(android.graphics.Color.BLACK)
-                    if (isBaggageTopDetected) {
-                        hideBaggageSideAndTopPlaneBounding()
-                        renderBaggage()
+        scanBtn = findViewById<TextView>(R.id.begin_scan).apply {
+            visibility = View.VISIBLE
+            setOnTouchListener { v, event ->
+                when(event.action) {
+                    MotionEvent.ACTION_DOWN -> {
+                        isScanning = true
+                        scanBtn.setBackgroundColor(android.graphics.Color.BLUE)
                     }
+                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                        isScanning = false
+                        scanBtn.setBackgroundColor(android.graphics.Color.BLACK)
+                        if (isDetectFinish() && !isBaggageRendered) {
+                            hideBaggageSideAndTopPlaneBounding()
+                            renderBaggage()
+                        }
+                    }
+                    else -> {}
                 }
-                else -> {}
+                true
             }
-            true
         }
+
     }
 
     private fun initPointCloud() {
@@ -145,54 +143,87 @@ class ArMeasureBaggageActivity : AppCompatActivity(), Scene.OnUpdateListener, Ba
     private val invalidPlaneSet = hashSetOf<Plane>()
     override fun onUpdate(frameTime: FrameTime) {
         val frame = arSceneView.arFrame
-        if (frame == null || frame.camera.trackingState != TrackingState.TRACKING || !isGroundDetected) {
+        if (frame == null || frame.camera.trackingState != TrackingState.TRACKING) {
             return
         }
 
         updatePlaneInfo()
 
-        if (isAutoMode && isScanning) {
-            val trackables = frame.getUpdatedTrackables(Plane::class.java)
-            val iterator = trackables.iterator()
-            while (iterator.hasNext()) {
-                val plane = iterator.next()
-                if (plane.trackingState != TrackingState.TRACKING) {
-                    continue
-                }
-                if (groundPlane == plane) {
-                    continue
-                }
-                if (groundPlane == plane.subsumedBy) {
-                    continue
-                }
-                if (invalidPlaneSet.contains(plane)) {
-                    continue
-                }
-                if (isBaggageTopDetected) {
-                    renderMeasureResult()
-                } else if (isBaggageSideDetected) {
-                    if (!autoDetectBaggageTopPlane(plane)) {
-                        invalidPlaneSet.add(plane)
+        if (isScanning) {
+            if (isDetectFinish()) {
+                renderMeasureResult()
+            } else if (isBaggageSideDetected) {
+
+                //搜索最低的地面
+                val trackables = frame.getUpdatedTrackables(Plane::class.java)
+                var lowestPlane: Plane? = null
+                var highestPlane: Plane? = null
+
+                val iterator = trackables.iterator()
+                while (iterator.hasNext()) {
+                    val plane = iterator.next()
+                    if (plane.trackingState != TrackingState.TRACKING && plane.type != Plane.Type.HORIZONTAL_UPWARD_FACING) {
+                        continue
                     }
-                } else {
+                    if (invalidPlaneSet.contains(plane)) {
+                        continue
+                    }
+                    if (lowestPlane == null) {
+                        lowestPlane = plane
+                    } else {
+                        val lowestPlaneNode = AnchorNode(lowestPlane!!.createAnchor(lowestPlane.centerPose))
+                        val currentPlaneNode = AnchorNode(plane!!.createAnchor(plane.centerPose))
+
+                        if (currentPlaneNode.worldPosition.y < lowestPlaneNode!!.worldPosition.y) {
+                            lowestPlane = plane
+                        }
+
+                        lowestPlaneNode.anchor?.detach()
+                        currentPlaneNode.anchor?.detach()
+                    }
+                }
+
+
+                frame.hitTest(arSceneView.width * 0.5F, arSceneView.height * 0.5F).forEach {
+                    val trackable = it.trackable
+                    if (trackable is Plane && trackable.isPoseInPolygon(it.hitPose) && !invalidPlaneSet.contains(trackable)) {
+                        highestPlane = trackable
+                    }
+                }
+
+                if (lowestPlane != null && highestPlane != null) {
+                    autoDetectGroundPlane(lowestPlane)
+                    if(!autoDetectBaggageTopPlane(highestPlane!!)) {
+                        invalidPlaneSet.add(highestPlane!!)
+                    }
+                }
+            } else {
+                val trackables = frame.getUpdatedTrackables(Plane::class.java)
+                val iterator = trackables.iterator()
+                while (iterator.hasNext()) {
+                    val plane = iterator.next()
+                    if (plane.trackingState != TrackingState.TRACKING) {
+                        continue
+                    }
                     if(autoDetectBaggageSidePlane(plane)) {
                         break
                     }
                 }
             }
         } else {
-            if (isBaggageTopDetected) {
+            if (isDetectFinish()) {
                 renderMeasureResult()
-                if (!isBaggageRendered) {
-                    renderBaggage()
-                }
             }
         }
 
     }
 
+    private fun isDetectFinish(): Boolean{
+        return isGroundDetected && isBaggageTopDetected
+    }
+
     private fun updatePlaneInfo() {
-        if (isGroundDetected && isBaggageTopDetected) {
+        if (isDetectFinish()) {
             val x = baggageTopPlane!!.extentX
             val y = baggageTopPlaneNode!!.worldPosition.y - groundPlaneNode!!.worldPosition.y
             val z = baggageTopPlane!!.extentZ
@@ -203,45 +234,18 @@ class ArMeasureBaggageActivity : AppCompatActivity(), Scene.OnUpdateListener, Ba
     }
 
     override fun onTapPlane(hitResult: HitResult, plane: Plane, motionEvent: MotionEvent) {
-        if (groundPlane != null && baggageTopPlane != null) {
-            return
-        }
-        if (!isGroundDetected) {
-            detectGroundPlane(hitResult, plane)
-            return
-        }
-        if (!isBaggageTopDetected && !isAutoMode) {
-            manualDetectBaggageTopPlane(plane)
-        }
+
     }
 
-
-    private fun detectGroundPlane(hitResult: HitResult, plane: Plane) {
+    private fun autoDetectGroundPlane(plane: Plane) {
         isGroundDetected = true
         groundPlane = plane
-        val anchor = arSceneView.session?.createAnchor(hitResult.hitPose)
+        val anchor = arSceneView.session?.createAnchor(plane.centerPose)
         groundPlaneNode = AnchorNode(anchor).apply {
             setParent(arSceneView.scene)
         }
-        userHitView.text = "开始扫描行李箱"
-        renderGroundAndy()
     }
 
-
-    private fun manualDetectBaggageTopPlane(plane: Plane) {
-        if (checkTopPlaneValid(plane)) {
-            isBaggageTopDetected = true
-            baggageTopPlane = plane
-            val anchor = arSceneView.session?.createAnchor(plane.centerPose)
-            baggageTopPlaneNode = AnchorNode(anchor).apply {
-                setParent(arSceneView.scene)
-            }
-            setPlaneRendererEnabled(false)
-
-        } else {
-            Toast.makeText(this, "所选择平面不符合规则，请重新选择！", Toast.LENGTH_SHORT).show()
-        }
-    }
 
 
     private fun autoDetectBaggageTopPlane(plane: Plane): Boolean {
@@ -275,22 +279,11 @@ class ArMeasureBaggageActivity : AppCompatActivity(), Scene.OnUpdateListener, Ba
     }
 
     private fun checkSidePlaneValid(plane: Plane): Boolean {
-        if (plane.type == Plane.Type.HORIZONTAL_UPWARD_FACING || plane.type == Plane.Type.HORIZONTAL_DOWNWARD_FACING) {
-            return false
-        }
-
-        return groundPlaneNode?.run {
-            val anchorNode = AnchorNode(plane.createAnchor(plane.centerPose))
-            val groundY = worldPosition.y
-            val sidePlaneCenterY = anchorNode.worldPosition.y
-            anchorNode.anchor?.detach()
-            sidePlaneCenterY - groundY >= MIN_BAGGAGE_HEIGHT / 2
-        } ?:false
-
+        return plane.type == Plane.Type.VERTICAL
     }
 
     private fun checkTopPlaneValid(plane: Plane): Boolean {
-        if (plane.type == Plane.Type.VERTICAL || plane.type == Plane.Type.HORIZONTAL_DOWNWARD_FACING) {
+        if (plane.type == Plane.Type.VERTICAL) {
             return false
         }
         return groundPlaneNode?.run {
@@ -302,9 +295,7 @@ class ArMeasureBaggageActivity : AppCompatActivity(), Scene.OnUpdateListener, Ba
                     && max(plane.extentX, plane.extentZ) <= MAX_BAGGAGE_LENGTH
                     && topPlaneY - groundY >= MIN_BAGGAGE_HEIGHT
         } ?:false
-
     }
-
 
     private fun renderMeasureResult() {
         userHitView.text = "行李箱扫描完毕"
@@ -318,26 +309,6 @@ class ArMeasureBaggageActivity : AppCompatActivity(), Scene.OnUpdateListener, Ba
         }
     }
 
-
-    private fun renderGroundAndy() {
-        ModelRenderable.builder()
-                .setSource(this, R.raw.andy)
-                .build()
-                .thenAccept {
-                    TransformableNode(arFragment.transformationSystem).apply{
-                        renderable = it
-                        setParent(groundPlaneNode)
-                        select()
-                    }
-                }
-                .exceptionally { throwable ->
-                    val toast = Toast.makeText(this, "Unable to load andy renderable", Toast.LENGTH_LONG)
-                    toast.setGravity(Gravity.CENTER, 0, 0)
-                    toast.show()
-                    null
-                }
-
-    }
 
     private fun renderBaggage() {
         isBaggageRendered = true
