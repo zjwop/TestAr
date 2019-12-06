@@ -4,10 +4,7 @@ import android.util.Log
 import android.widget.Toast
 import com.google.ar.core.Config
 import com.google.ar.core.Session
-import com.google.ar.core.exceptions.UnavailableApkTooOldException
-import com.google.ar.core.exceptions.UnavailableArcoreNotInstalledException
-import com.google.ar.core.exceptions.UnavailableException
-import com.google.ar.core.exceptions.UnavailableSdkTooOldException
+import com.google.ar.core.exceptions.*
 import com.google.ar.sceneform.ux.BaseArFragment
 
 /**
@@ -31,9 +28,9 @@ class ArConfigFragment : BaseArFragment() {
 
         val message: String = when(sessionException) {
             is UnavailableArcoreNotInstalledException -> "Please install ARCore"
-            is UnavailableArcoreNotInstalledException -> "Please install ARCore"
-            is UnavailableApkTooOldException -> "Please update ARCore"
+            is UnavailableApkTooOldException -> "Please install ARCore"
             is UnavailableSdkTooOldException -> "Please update this app"
+            is UnavailableDeviceNotCompatibleException -> "This device does not support AR"
             else -> "Failed to create AR session"
         }
         Log.e(TAG, "Error: $message", sessionException)
